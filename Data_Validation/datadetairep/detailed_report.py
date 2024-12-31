@@ -39,7 +39,7 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
 
         metrics = ['Completeness', 'Timeliness', 'Validity', 'Accuracy', 'Uniqueness', 'Consistency']
 
-        # Step 2: Initialize HTML Content
+        # Step 3: Initialize HTML Content
         html_content = []
 
         # Add external CSS file
@@ -53,8 +53,8 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
             <li><a href="#missing-values">Missing Values Analysis</a></li>
             <li><a href="#visualizations">Visualizations</a></li>
         </ul></div>""")
-
-        # Step 3: Dataset Statistics and Variable Types Section
+        
+        # Step 4: Dataset Statistics and Variable Types Section
         html_content.append("""<div id='dataset-statistics' class='statistics-container' style="display: flex; justify-content: space-between; gap: 20px; padding: 20px; background-color: #f4f6f9; max-width: 1200px; margin: 20px auto; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);">
              <div class='statistics-section' style="flex: 1; padding: 20px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
                  <h6 class='section-title' style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 20px; border-bottom: 3px solid #3498db; padding-bottom: 10px;">Dataset Statistics</h6>
@@ -81,6 +81,13 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
              .statistics-section:hover { transform: scale(1.02); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); }
              tr:hover { background-color: #f1f5f8; }
          </style>""")
+
+
+        html_content.append(f"""<div id="overall-score" class="overall-score-container">
+            <p class="overall-score-label">Overall Data Quality Score</p>
+            <div class="overall-score-value">{overall_score:.2f}%</div>
+        </div>""")
+        
 
         # Step 4: Detailed Column-Wise Quality Scores Section
         html_content.append("<div id='detailed-scores'><h3 class='section-title'>Detailed Column-Wise Quality Scores</h3>")
@@ -160,28 +167,6 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
             </div>
         </div>""")
 
-        # Step 7: Overall Data Quality Score Below Missing Values Analysis
-        html_content.append(f"""<div id="overall-score" class="overall-score-container">
-            <p class="overall-score-label">Overall Data Quality Score</p>
-            <div class="overall-score-value">{overall_score:.2f}%</div>
-        </div>""")
- 
-        html_content.append("<div id='detailed-scores'><h3 class='section-title'>Detailed Column-Wise Quality Scores</h3>")
-        html_content.append("<table>")
-        html_content.append("<tr><th>Column</th>" + "".join(f"<th>{metric}</th>" for metric in metrics) + "</tr>")
-        for col, scores in detailed_scores_df.iterrows():
-            html_content.append("<tr>" + f"<td>{col}</td>" + "".join(f"<td>{scores.get(metric, 0):.2f}%</td>" for metric in metrics) + "</tr>")
-        html_content.append("</table></div>")
- 
-        # Overall Quality Metrics Table
-        html_content.append("<div id='average-scores'><h3 class='section-title'>Overall Average Quality Scores</h3>")
-        html_content.append("<table>")
-        html_content.append("<tr><th>Metric</th><th>Average Score (%)</th></tr>")
-        for metric in metrics:
-            overall_metric_score = detailed_scores_df[metric].mean()
-            html_content.append(f"<tr><td>{metric}</td><td>{overall_metric_score:.2f}%</td></tr>")
-        html_content.append("</table></div>")
- 
         html_content.append("""<div id="visualizations">
             <h3 class='section-title'>Select a Column to View Visualizations</h3>
             <select id="column-select" onchange="showChart(this.value)">

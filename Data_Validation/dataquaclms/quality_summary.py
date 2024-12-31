@@ -6,7 +6,6 @@ def generate_quality_summary(df, scores_df):
         <link rel="stylesheet" href="Data_Validation\\dataquaclms\\Gqcls.css">
 
         <div class="container">
-            <h1>Quality Summary Report</h1>
             <div class="metrics-container">
         """)
 
