@@ -1,5 +1,4 @@
  
-/* Reset and Global Styling */
 * {
     margin: 0;
     padding: 0;
@@ -59,8 +58,77 @@ html {
     outline: 2px solid #ffffff;
     outline-offset: 2px;
 }
+
+/* Container styling */
+#alerts-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Alert item design */
+#alerts-content li {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    padding: 20px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ffffff, #f6f9fc);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 -3px 6px rgba(255, 255, 255, 0.5);
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    transition: transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+#alerts-content li:hover {
+    transform: scale(1.03);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 -5px 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Icon styling */
+#alerts-content li span.icon {
+    margin-right: 20px;
+    font-size: 24px;
+    color: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(145deg, #ffecec, #ffd6d6);
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+}
+
+#alerts-content li:hover span.icon {
+    transform: rotate(12deg) scale(1.1);
+}
+
+#alerts-content li span.text {
+    flex-grow: 1;
+    font-size: 16px;
+    color: rgba(44, 62, 80, 0.85);
+}
+
+#alerts-content li span.action {
+    font-size: 14px;
+    color: #3498db;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 8px 15px;
+    background: linear-gradient(145deg, #d8efff, #b9dcff);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+#alerts-content li span.action:hover {
+    background: linear-gradient(145deg, #b9dcff, #d8efff);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
  
-/* Section Styling */
 .section-content {
     display: none;
     padding: 30px;
@@ -259,3 +327,47 @@ select:focus {
     }
 }
  
+.overall-score-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 25vh; 
+    text-align: center; 
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; 
+}
+
+.overall-score-container:hover {
+    transform: translateY(-10px); 
+    box-shadow: 0 8px 20px rgb(246, 243, 243); 
+}
+
+.overall-score-circle-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle {
+    transform: rotate(-90deg); 
+    stroke: white;
+}
+
+.score-text {
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    color: yellow;
+}
+
+.overall-score-label {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: white; 
+}

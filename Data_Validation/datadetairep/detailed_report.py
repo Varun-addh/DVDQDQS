@@ -14,6 +14,100 @@ def format_memory_size(bytes_size):
         index += 1
     return f"{bytes_size:.2f} {units[index]}"
 
+
+def generate_alerts(df):
+    alerts = []
+
+    # Missing Values
+    missing_values = df.isnull().sum()
+    for col, count in missing_values.items():
+        if count > 0:
+            percentage = (count / len(df)) * 100
+            alerts.append(f"ALERT: '{col}' has {count} missing values ({percentage:.2f}%).")
+
+    #Duplicate Rows 
+    duplicate_rows = df.duplicated().sum()
+    if duplicate_rows > 0:
+        alerts.append(f"ALERT: Dataset contains {duplicate_rows} duplicate rows ({(duplicate_rows / len(df)) * 100:.2f}%).")
+
+    #High Correlation
+    correlation_matrix = df.corr(numeric_only=True)
+    threshold = 0.85 
+    overall_correlations = {}
+    for col1 in correlation_matrix.columns:
+        for col2 in correlation_matrix.columns:
+            if col1 != col2 and abs(correlation_matrix.loc[col1, col2]) > threshold:
+                alerts.append(
+                    f"ALERT: '{col1}' is highly correlated with '{col2}' (correlation: {correlation_matrix.loc[col1, col2]:.2f})."
+                )
+                if col1 not in overall_correlations:
+                    overall_correlations[col1] = 0
+                if col2 not in overall_correlations:
+                    overall_correlations[col2] = 0
+                overall_correlations[col1] += 1
+                overall_correlations[col2] += 1
+
+    for col, count in overall_correlations.items():
+        if count > 1:  
+            alerts.append(f"ALERT: '{col}' is overall highly correlated with multiple columns ({count} columns).")
+
+    #Negative Values
+    numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
+    for col in numeric_columns:
+        if (df[col] < 0).any():
+            negative_count = (df[col] < 0).sum()
+            alerts.append(f"ALERT: '{col}' contains {negative_count} negative values.")
+
+    # Low Variance
+    for col in df.columns: 
+        if df[col].nunique() == 1:
+            alerts.append(f"ALERT: '{col}' has low variance, with only one unique value across the dataset.")
+        elif df[col].nunique() < 5 and df[col].dtype == 'object': 
+            alerts.append(f"ALERT: '{col}' has low cardinality (only {df[col].nunique()} unique values).") 
+
+    # Unique Value Columns
+    for col in df.columns:
+        try:
+            # Handle empty or all-null columns
+            if df[col].isnull().all():
+                alerts.append(f"ALERT: '{col}' is entirely empty or contains only missing values.")
+                continue
+
+            # Handle numeric, categorical, and mixed-type columns
+            unique_count = df[col].nunique(dropna=True)  # Exclude NaNs from unique count
+            total_count = len(df[col])
+
+            if unique_count == total_count:
+                alerts.append(f"ALERT: '{col}' has unique values across all rows (unique distribution).")
+            elif unique_count > total_count * 0.95:  # Mostly unique values
+                alerts.append(f"ALERT: '{col}' is nearly unique ({unique_count} unique values, {total_count - unique_count} duplicates).")
+        except Exception as e:
+            # Log any issues with a column that cannot be processed
+            alerts.append(f"WARNING: Could not process column '{col}' due to {str(e)}.")
+
+    # Outliers (using IQR) 
+    for col in numeric_columns:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+        if len(outliers) > 0:
+            alerts.append(f"ALERT: '{col}' has {len(outliers)} potential outliers.")
+
+    #Skewness and Kurtosis
+    for col in numeric_columns:
+        skewness = df[col].skew()
+        kurtosis = df[col].kurtosis()
+        if abs(skewness) > 1:  # Threshold for significant skewness
+            alerts.append(f"ALERT: '{col}' is significantly skewed (skewness: {skewness:.2f}).")
+        if abs(kurtosis) > 3:  # Threshold for significant kurtosis
+            alerts.append(f"ALERT: '{col}' has high kurtosis (kurtosis: {kurtosis:.2f}).")
+
+    return alerts
+
+
 def generate_detailed_report(df, detailed_scores_df, overall_score):
     try:
         # Step 1: Calculate Dataset Statistics and Variable Types
@@ -45,7 +139,7 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
         # Add external CSS file
         html_content.append("""<link rel="stylesheet" type="text/css" href="Data_Validation\\datadetairep\\Gde.css">""")
 
-        # Add navigation bar (Updated order)
+        # Add navigation bar
         html_content.append("""<div class="navigation-bar"><ul>
             <li><a href="#dataset-statistics">Dataset Statistics</a></li>
             <li><a href="#detailed-scores">Column-Wise Quality Scores</a></li>
@@ -53,7 +147,86 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
             <li><a href="#missing-values">Missing Values Analysis</a></li>
             <li><a href="#visualizations">Visualizations</a></li>
         </ul></div>""")
-        
+
+        # Generate alerts
+        alerts = generate_alerts(df)
+        alerts_count = len(alerts)
+
+        # Overview and Alerts Buttons Section
+        html_content.append(f"""
+        <div class="button-container" style="display: flex; gap: 10px; padding: 10px;">
+            <button class="overview-button" onclick="toggleOverview()" 
+                    style="padding: 10px 20px; font-size: 14px; border-radius: 5px; border: none; background-color: #3498db; color: white; cursor: pointer;">
+                Overview
+            </button>
+            <button id="alerts-button" class="alerts-button" onclick="toggleAlerts()" 
+                    style="padding: 10px 20px; font-size: 14px; border-radius: 5px; border: none; background-color: #e74c3c; color: white; cursor: pointer;">
+                Alerts({alerts_count})
+            </button>
+        </div>
+        """)
+
+        html_content.append("""
+<div id="alerts-section" style="display: none; padding: 30px; background: linear-gradient(145deg, #fdfbfb, #ebedee); border-radius: 20px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 -5px 15px rgba(255, 255, 255, 0.6); font-family: 'Poppins', sans-serif; color: #34495e;">
+    <h2 style="text-align: center; color: #2c3e50; font-weight: 700; margin-bottom: 25px; letter-spacing: 1.2px; text-transform: uppercase;">🚨 Dataset Alerts</h2>
+    <div id="alerts-content" style="padding: 20px; border-top: 2px solid rgba(0, 0, 0, 0.1);">
+        <p style="text-align: center; color: rgba(44, 62, 80, 0.6); font-style: italic;">Scanning for alerts...</p>
+    </div>
+</div>
+
+""")
+
+        alerts_js = ", ".join([f'"{alert}"' for alert in alerts])
+
+        # JavaScript for toggling sections and displaying alerts
+        html_content.append(f"""
+        <script>
+            function toggleOverview() {{
+                const sections = ['dataset-statistics', 'detailed-scores', 'average-scores', 'missing-values', 'visualizations','overall-score'];
+                sections.forEach(section => {{
+                    const elem = document.getElementById(section);
+                    if (elem) elem.style.display = 'block';
+                }});
+                document.getElementById('alerts-section').style.display = 'none';
+            }}
+
+            function toggleAlerts() {{
+                const datasetStatistics = document.getElementById('dataset-statistics');
+                const detailedScores = document.getElementById('detailed-scores');
+                const averageScores = document.getElementById('average-scores');
+                const missingValues = document.getElementById('missing-values');
+                const visualizations = document.getElementById('visualizations');
+                const alertsSection = document.getElementById('alerts-section');
+                const overallScore = document.getElementById('overall-score');
+
+                if (datasetStatistics) datasetStatistics.style.display = 'none';
+                if (detailedScores) detailedScores.style.display = 'none';
+                if (averageScores) averageScores.style.display = 'none';
+                if (missingValues) missingValues.style.display = 'none';
+                if (visualizations) visualizations.style.display = 'none';
+                if(overallScore) overallScore.style.display = 'none';
+                if (alertsSection) {{
+                    alertsSection.style.display = 'block';
+
+                    const alertsContent = document.getElementById('alerts-content');
+                    const alerts = [{alerts_js}];
+
+                    if (alerts.length > 0) {{
+                        let alertList = '<ul>';
+                        alerts.forEach(alert => {{
+                            alertList += `<li>${{alert}}</li>`; 
+                        }});
+                        alertList += '</ul>';
+                        alertsContent.innerHTML = alertList;
+                    }} else {{
+                        alertsContent.innerHTML = '<p>No alerts found for this dataset.</p>';
+                    }}
+                }}
+            }}
+        </script>
+        """)
+
+
         # Step 4: Dataset Statistics and Variable Types Section
         html_content.append("""<div id='dataset-statistics' class='statistics-container' style="display: flex; justify-content: space-between; gap: 20px; padding: 20px; background-color: #f4f6f9; max-width: 1200px; margin: 20px auto; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);">
              <div class='statistics-section' style="flex: 1; padding: 20px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
@@ -61,12 +234,12 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
                  <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">""")
 
         for key, value in dataset_statistics.items():
-             if isinstance(value, dict):  # Handle dictionary values (Unique Values and Data Types)
-                 html_content.append(f"<tr><td colspan='2' style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td></tr>")
-                 for sub_key, sub_value in value.items():
-                     html_content.append(f"<tr><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{sub_key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{sub_value}</td></tr>")
-             else:
-                 html_content.append(f"<tr style='border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease;'><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{value}</td></tr>")
+            if isinstance(value, dict):  # Handle dictionary values (Unique Values and Data Types)
+                html_content.append(f"<tr><td colspan='2' style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td></tr>")
+                for sub_key, sub_value in value.items():
+                    html_content.append(f"<tr><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{sub_key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{sub_value}</td></tr>")
+            else:
+                html_content.append(f"<tr style='border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease;'><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{value}</td></tr>")
 
         html_content.append("""</table></div>
              <div class='statistics-section' style="flex: 1; padding: 20px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
@@ -74,7 +247,7 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
                  <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">""")
 
         for key, value in variable_types.items():
-             html_content.append(f"<tr style='border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease;'><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{value}</td></tr>")
+            html_content.append(f"<tr style='border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease;'><td style='padding: 8px; font-size: 1.0em; color: #34495e; text-align: left; font-weight: 500;'>{key}</td><td style='padding: 8px; font-size: 1.0em; color: #7f8c8d; text-align: left;'>{value}</td></tr>")
 
         html_content.append("""</table></div></div>
          <style>
@@ -83,11 +256,18 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
          </style>""")
 
 
-        html_content.append(f"""<div id="overall-score" class="overall-score-container">
-            <p class="overall-score-label">Overall Data Quality Score</p>
-            <div class="overall-score-value">{overall_score:.2f}%</div>
-        </div>""")
-        
+        html_content.append(f"""
+    <div id="overall-score" class="overall-score-container">
+        <p class="overall-score-label">Overall Data Quality Score</p>
+        <div class="overall-score-circle-container">
+            <svg width="120" height="120" class="circle">
+                <circle cx="60" cy="60" r="50" stroke="lightgray" stroke-width="6"></circle>
+                <circle cx="60" cy="60" r="50" stroke="yellow" stroke-width="6" stroke-dasharray="314" stroke-dashoffset="{314 - (314 * overall_score) / 100}" class="progress-circle"></circle>
+            </svg>
+            <div class="score-text">{overall_score:.2f}%</div>
+        </div>
+    </div>
+""")   
 
         # Step 4: Detailed Column-Wise Quality Scores Section
         html_content.append("<div id='detailed-scores'><h3 class='section-title'>Detailed Column-Wise Quality Scores</h3>")
@@ -239,6 +419,8 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
                 }
             }
         </script>""")
+
+        
  
         return "\n".join(html_content)
  

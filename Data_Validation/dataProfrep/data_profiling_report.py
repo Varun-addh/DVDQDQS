@@ -194,13 +194,23 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
             document.getElementById(rowId).style.display = 'block';
         }}
     </script>
+    
 </head>
 <body>
+    <body>
     <div class="navbar">
-        <a href="javascript:void(0);" onclick="showSection('detailed-report')">Detailed Report</a>
-        <a href="javascript:void(0);" onclick="showSection('quality-summary')">Quality Summary</a>
-        <a href="javascript:void(0);" onclick="showSection('column-statistics')">Column Statistics</a>
+        <div class="logo-container">
+            <img src="images/image22.png" alt="Logo">
+            <p class="logo-title">Data Quality Report</p>
+        </div>
+        <div class="nav-links">
+            <a href="javascript:void(0);" onclick="showSection('detailed-report')">Detailed Report</a>
+            <a href="javascript:void(0);" onclick="showSection('quality-summary')">Quality Summary</a>
+            <a href="javascript:void(0);" onclick="showSection('column-statistics')">Column Statistics</a>
+        </div>
     </div>
+</body>
+
     <div class="content">
         <div id="detailed-report" class="section-content active">
             {detailed_report_content}
