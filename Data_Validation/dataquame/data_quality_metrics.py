@@ -43,25 +43,70 @@ def timeliness_score(column, threshold_date):
 
 def accuracy_score(df, df2, column_name, threshold=None):
     """Calculates the accuracy score between two DataFrames for a specific column."""
-
-    # Check if both columns exist in the respective DataFrames
-    if column_name not in df.columns or column_name not in df2.columns:
-        raise ValueError(f"Column '{column_name}' not found in both DataFrames.")
-
-    # Handling the case where we compare numeric values with a threshold
-    if pd.api.types.is_numeric_dtype(df[column_name]) and threshold is not None:
-        correct_entries = (abs(df[column_name] - df2[column_name]) <= threshold).sum()
-    else:
-        # Compare string or categorical columns directly (ignoring NaN comparisons)
-        correct_entries = (df[column_name] == df2[column_name]).sum()
-
-    # Count the total number of non-NaN entries in both columns
-    total_entries = len(df[column_name])
-    total_valid_entries = len(df[column_name].dropna())
-
+    
+    # Check if the column exists in both DataFrames
+    missing_columns = []
+    if column_name not in df.columns:
+        missing_columns.append(f"'{column_name}' in the first DataFrame")
+    if column_name not in df2.columns:
+        missing_columns.append(f"'{column_name}' in the second DataFrame")
+    
+    if missing_columns:
+        raise ValueError(f"Column(s) missing: " + ", ".join(missing_columns))
+    
+    # Extract the columns to compare
+    col1 = df[column_name]
+    col2 = df2[column_name]
+    
+    # Total rows
+    total_entries = len(col1)
+    
+    # Create masks for different cases
+    both_missing = col1.isna() & col2.isna()
+    non_missing = ~col1.isna() & ~col2.isna()
+    mismatched = col1[non_missing] != col2[non_missing]
+    
+    # Calculate correct entries
+    correct_entries = both_missing.sum() + (col1[non_missing] == col2[non_missing]).sum()
+    
     # Calculate accuracy percentage
-    accuracy_percentage = (correct_entries / total_valid_entries) * 100 if total_valid_entries > 0 else 100
+    accuracy_percentage = (correct_entries / total_entries) * 100 if total_entries > 0 else 100
+    
     return accuracy_percentage
+
+
+# def accuracy_score(df, df2, column_name, threshold=None):
+#     """Calculates the accuracy score between two DataFrames for a specific column."""
+    
+#     # Check if the column exists in both DataFrames
+#     missing_columns = []
+#     if column_name not in df.columns:
+#         missing_columns.append(f"'{column_name}' in the first DataFrame")
+#     if column_name not in df2.columns:
+#         missing_columns.append(f"'{column_name}' in the second DataFrame")
+    
+#     if missing_columns:
+#         raise ValueError(f"Column(s) missing: " + ", ".join(missing_columns))
+    
+#     # Extract the columns to compare
+#     col1 = df[column_name]
+#     col2 = df2[column_name]
+    
+#     # Create a mask for non-missing values in both columns
+#     non_missing_mask = ~col1.isna() & ~col2.isna()
+    
+#     # Count correct matches only for non-missing values
+#     correct_entries = (col1[non_missing_mask] == col2[non_missing_mask]).sum()
+    
+#     # Total entries to consider include non-missing and mismatched entries
+#     total_entries = len(col1)
+    
+#     # Calculate accuracy percentage
+#     accuracy_percentage = (correct_entries / total_entries) * 100 if total_entries > 0 else 0
+    
+#     return accuracy_percentage
+
+
 
 def consistency_score(df, df2, column1, column2=None):
     """Calculates the consistency score by comparing two columns."""

@@ -198,6 +198,7 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
                 const visualizations = document.getElementById('visualizations');
                 const alertsSection = document.getElementById('alerts-section');
                 const overallScore = document.getElementById('overall-score');
+                const charts = document.querySelectorAll('.charts-side-by-side');
 
                 if (datasetStatistics) datasetStatistics.style.display = 'none';
                 if (detailedScores) detailedScores.style.display = 'none';
@@ -205,6 +206,7 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
                 if (missingValues) missingValues.style.display = 'none';
                 if (visualizations) visualizations.style.display = 'none';
                 if(overallScore) overallScore.style.display = 'none';
+                charts.forEach(chart => chart.style.display = 'none');
                 if (alertsSection) {{
                     alertsSection.style.display = 'block';
 
@@ -258,15 +260,21 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
 
         html_content.append(f"""
     <div id="overall-score" class="overall-score-container">
-        <p class="overall-score-label">Overall Data Quality Score</p>
-        <div class="overall-score-circle-container">
-            <svg width="120" height="120" class="circle">
-                <circle cx="60" cy="60" r="50" stroke="lightgray" stroke-width="6"></circle>
-                <circle cx="60" cy="60" r="50" stroke="yellow" stroke-width="6" stroke-dasharray="314" stroke-dashoffset="{314 - (314 * overall_score) / 100}" class="progress-circle"></circle>
-            </svg>
-            <div class="score-text">{overall_score:.2f}%</div>
-        </div>
+    <p class="overall-score-label">Overall Data Quality Score</p>
+    <div class="overall-score-circle-container">
+        <svg width="120" height="120" class="circle">
+            <circle cx="60" cy="60" r="50" stroke="black" stroke-width="6" fill="none"></circle>
+            <circle cx="60" cy="60" r="50" stroke="yellow" stroke-width="6" stroke-dasharray="314"
+                stroke-dashoffset="{314 - (314 * overall_score) / 100}"
+                class="progress-circle"
+                style="fill: none; transition: stroke-dashoffset 0.5s ease;">
+            </circle>
+        </svg>
+        <div class="score-text">{overall_score:.2f}%</div>
     </div>
+</div>
+
+
 """)   
 
         # Step 4: Detailed Column-Wise Quality Scores Section

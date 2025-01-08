@@ -1,7 +1,7 @@
  
 * {
-    margin: 0;
-    padding: 0;
+    margin: 0px;
+    padding: 0px;
     box-sizing: border-box;
 }
  
@@ -11,6 +11,8 @@ body {
     color: #333;
     line-height: 1.8;
     overflow-x: hidden;
+    margin: 0;
+    padding: 0;
 }
  
 html {
@@ -20,7 +22,7 @@ html {
 /* Navigation Bar */
 .navigation-bar {
     position: sticky;
-    top: 0;
+    top: 90px;
     z-index: 1000;
     background: linear-gradient(120deg, #005c97, #363795);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -131,12 +133,12 @@ html {
  
 .section-content {
     display: none;
-    padding: 30px;
+    padding: 20px;
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
     animation: fadeIn 0.5s ease-in-out;
-    margin: 30px auto;
+    margin: 10px auto;
     max-width: 90%;
 }
  
@@ -181,7 +183,7 @@ table {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
- 
+
 th, td {
     padding: 16px;
     text-align: center;
@@ -210,24 +212,34 @@ tr:hover {
     margin: 40px auto;
     padding: 20px 30px;
     border-radius: 12px;
-    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    background: linear-gradient(45deg, #6a11cb, #423b3b);
     color: #ffffff;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
- 
+
 .overall-score-label {
     font-size: 20px;
     font-weight: bold;
     text-transform: uppercase;
     margin-bottom: 10px;
 }
- 
+
 .overall-score-value {
     font-size: 36px;
     font-weight: bold;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
- 
+
+.overall-score-circle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+
 /* Missing Values Analysis */
 .missing-values-container {
     margin: 50px auto;

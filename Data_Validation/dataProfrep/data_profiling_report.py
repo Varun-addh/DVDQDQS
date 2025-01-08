@@ -119,7 +119,9 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
 
 
         # Generate dropdown menu
+        
         dropdown_html = """
+        <h2>Column Analytics</h2>
         <select id='column-select' onchange='filterColumnStats(this.value)'>
             <option value='all' selected>All Columns</option>
         """
@@ -144,24 +146,28 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
             """
 
         column_statistics_html = f"""
-        <div>
-            <button onclick="showRows('first-rows')">First Rows</button>
-            <button onclick="showRows('last-rows')">Last Rows</button>
-        </div>
-        <div id='first-rows' class='row-table' style='display:none; overflow-x:auto;'>
-            <div class="scrollable-table">
-                {first_10_rows_html}
-            </div>
-        </div>
-        <div id='last-rows' class='row-table' style='display:none; overflow-x:auto;'>
-            <div class="scrollable-table">
-                {last_10_rows_html}
-            </div>
-        </div>
-        {dropdown_html}
-        {column_html}
-        {correlation_visualization_html}
-        """
+<h2>Sample dataset</h2>
+
+<div>
+    <button onclick="showRows('first-rows')">First Rows</button>
+    <button onclick="showRows('last-rows')">Last Rows</button>
+</div>
+<div id='first-rows' class='row-table' style='overflow-x:auto;'>
+    <div class="scrollable-table">
+        {first_10_rows_html}
+    </div>
+</div>
+<div id='last-rows' class='row-table' style='display:none; overflow-x:auto;'>
+    <div class="scrollable-table">
+        {last_10_rows_html}
+    </div>
+</div>
+
+{dropdown_html}
+{column_html}
+{correlation_visualization_html}
+"""
+
 
         # Final HTML structure
         final_html = f"""

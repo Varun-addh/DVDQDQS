@@ -8,7 +8,6 @@ def generate_quality_summary(df, scores_df):
         <div class="container">
             <div class="metrics-container">
         """)
-
         # Generate HTML content for each metric card
         for metric in scores_df.columns:
             columns_passing = scores_df[scores_df[metric] >= 80].index.tolist()
@@ -26,7 +25,7 @@ def generate_quality_summary(df, scores_df):
                     html_content.append(f"<li>{col}</li>")
                 html_content.append("</ul>")
             else:
-                html_content.append("<p class='no-columns'>No columns passed this metric.</p>")
+                html_content.append("<p class='no-columns'>No columns are passing 80% or above.</p>")
 
             html_content.append("</div>")  # Closing metric-card
 

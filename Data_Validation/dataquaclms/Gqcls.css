@@ -3,7 +3,7 @@ body {
     line-height: 1.8;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa;
+    background-color: linear-gradient(120deg, #dae2f8, #d6a4a4);
     color: #343a40;
     scroll-behavior: smooth;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1d5db' fill-opacity='0.5'%3E%3Cpath d='M50 50v-6h-3v6h-6v3h6v6h3v-6h6v-3h-6zm0-40V0h-3v4h-6v3h6v6h3V7h6V4h-6zM7 50v-6H4v6H0v3h4v6h3v-6h6v-3H7zM7 4V0H4v4H0v3h4v6h3V7h6V4H7z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
@@ -34,7 +34,7 @@ h1 {
 .metrics-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
+    gap: 50px;
     margin-top: 40px;
 }
 
