@@ -17,8 +17,8 @@ if __name__ == "__main__":
             zf = zipfile.ZipFile(io.BytesIO(response.content))
             zf.extractall("Data_Validation\\Ds'S")
         # Step 1: Load the datasets
-        dataset_path = "Data_Validation\\Ds'S\\amazon_delivery - Copy.csv"
-        dataset_path2 = "Data_Validation\\Ds'S\\amazon_delivery 1.csv"
+        dataset_path = "Data_Validation\\Ds'S\\amazon.csv"
+        dataset_path2 = "Data_Validation\\Ds'S\\Amazon2.csv"
         df = load_dataset(dataset_path)
         df2 = load_dataset(dataset_path2)
 

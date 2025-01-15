@@ -55,7 +55,7 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
         first_10_rows_html = df.head(10).to_html(index=False)
         last_10_rows_html = df.tail(10).to_html(index=False)
 
-        # Correlation visualization
+         # Correlation visualization
         correlation_visualization_html = ""
         numeric_columns = df.select_dtypes(include=['int64', 'float64'])
 
@@ -63,18 +63,17 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
             # Compute correlation matrix
             corr_matrix = numeric_columns.corr()
 
-            fig, ax = plt.subplots(figsize=(10, 6))
-
+            fig, ax = plt.subplots(figsize=(6, 4))  # Reduced figure size for neatness
             sns.heatmap(
-                corr_matrix, 
-                annot=True, 
-                cmap='YlGnBu', 
-                fmt=".2f", 
-                linewidths=0.5, 
+                corr_matrix,
+                annot=True,
+                cmap='YlGnBu',
+                fmt=".2f",
+                linewidths=0.5,
                 ax=ax,
                 cbar_kws={"shrink": 0.8}
             )
-            ax.set_title('Correlation Matrix Heatmap', fontsize=18, fontweight='bold')
+            ax.set_title('Correlation Matrix Heatmap', fontsize=14, fontweight='bold')
             plt.tight_layout()
 
             buffer = io.BytesIO()
@@ -84,38 +83,23 @@ def generate_combined_report(df, detailed_report_content, quality_summary_conten
             buffer.close()
             plt.close()
 
-            pairplot_fig = sns.pairplot(
-                numeric_columns,
-                diag_kind='kde',
-                kind='reg',
-                plot_kws={'line_kws': {'color': 'red'}, 'scatter_kws': {'alpha': 0.6}},
-                palette='husl'
-            )
-            pairplot_fig.fig.suptitle("Pair Plot of Numeric Columns", fontsize=18, fontweight="bold")
-            pairplot_fig.fig.subplots_adjust(top=0.95)  
-
-            buffer = io.BytesIO()
-            pairplot_fig.fig.savefig(buffer, format="png", dpi=100)
-            buffer.seek(0)
-            pairplot_img = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            buffer.close()
-            plt.close()
-
             correlation_visualization_html = f"""
 <div class='correlation-section' style="font-family: Arial, sans-serif; color: #333; margin: 20px 0;">
     <h3 style="text-align: center; font-size: 1.8em; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px;">Correlation Analysis</h3>
-    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
-        <div style="flex: 1; min-width: 300px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 10px; overflow: hidden; border: 1px solid #eaeaea;">
-            <h4 style="text-align: center; background-color: #fff; color: #333; margin: 0; padding: 15px 0; font-size: 1.2em; font-weight: bold; border-bottom: 1px solid #eaeaea;">Heatmap</h4>
-            <img src="data:image/png;base64,{heatmap_img}" alt="Correlation Heatmap" style="width: 100%; height: auto; display: block;">
-        </div>
-        <div style="flex: 1; min-width: 300px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 10px; overflow: hidden; border: 1px solid #eaeaea;">
-            <h4 style="text-align: center; background-color: #fff; color: #333; margin: 0; padding: 15px 0; font-size: 1.2em; font-weight: bold; border-bottom: 1px solid #eaeaea;">Pair Plot</h4>
-            <img src="data:image/png;base64,{pairplot_img}" alt="Pair Plot" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div style="display: flex; justify-content: center; margin: 0 auto; max-width: 600px; padding: 10px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+        <img src="data:image/png;base64,{heatmap_img}" alt="Correlation Heatmap" style="width: 100%; height: auto; display: block; border-radius: 8px;">
     </div>
 </div>
 """
+        else:
+            # Message when no numeric columns are present
+            correlation_visualization_html = """
+<div class='correlation-section' style="font-family: Arial, sans-serif; color: #333; margin: 20px 0; text-align: center;">
+    <h3 style="font-size: 1.8em; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px;">Correlation Analysis</h3>
+    <p style="font-size: 1.2em; color: #555;">No numeric columns found in the dataset. Correlation analysis is only applicable to numeric data.</p>
+</div>
+"""
+
 
 
         # Generate dropdown menu
