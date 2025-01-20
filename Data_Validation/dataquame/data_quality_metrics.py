@@ -29,17 +29,17 @@ def validity_score(column, validation_function=None):
     valid_entries = column.apply(validation_function).sum()
     return valid_entries / len(column) * 100
 
-def timeliness_score(column, threshold_date):
-    """Calculate the timeliness score of a datetime column."""
-    if pd.api.types.is_datetime64_any_dtype(column):
-        if threshold_date is None:
-            raise ValueError("Threshold date must be provided and cannot be None.")
+# def timeliness_score(column, threshold_date):
+#     """Calculate the timeliness score of a datetime column."""
+#     if pd.api.types.is_datetime64_any_dtype(column):
+#         if threshold_date is None:
+#             raise ValueError("Threshold date must be provided and cannot be None.")
         
-        threshold_date = pd.to_datetime(threshold_date).tz_localize(None)
-        timely_entries = (column >= threshold_date).sum()
-        return timely_entries / len(column) * 100
+#         threshold_date = pd.to_datetime(threshold_date).tz_localize(None)
+#         timely_entries = (column >= threshold_date).sum()
+#         return timely_entries / len(column) * 100
 
-    return 100.0  # If not a datetime column, assume 100% timeliness
+#     return 100.0  # If not a datetime column, assume 100% timeliness
 
 def accuracy_score(df, df2, column_name, threshold=None):
     """Calculates the accuracy score between two DataFrames for a specific column."""
@@ -143,40 +143,46 @@ def consistency_score(df, df2, column1, column2=None):
     consistency_percentage = (consistency / total) * 100 if total > 0 else 100
     return consistency_percentage
 
-def calculate_scores(df,df2, threshold_date=None, reference_columns=None):
-    """Calculates data quality scores for each column in a DataFrame."""
+def calculate_scores(df, df2, selected_metrics=None, threshold_date=None):
+
+    if selected_metrics is None:
+        selected_metrics = ["Completeness", "Validity", "Uniqueness", "Accuracy", "Consistency"]
+    
     if threshold_date is None:
         threshold_date = pd.to_datetime("today")
-
+    
     detailed_scores = {}
-
     for col in df.columns:
         column_data = df[col]
+        column_scores = {}
 
-        # Calculate scores for each column
-        column_scores = {
-            "Completeness": completeness_score(column_data),
-            "Timeliness": timeliness_score(column_data, threshold_date) if pd.api.types.is_datetime64_any_dtype(column_data) else 100,
-            "Validity": validity_score(
+        if "Completeness" in selected_metrics:
+            column_scores["Completeness"] = completeness_score(column_data)
+
+        if "Uniqueness" in selected_metrics:
+            column_scores["Uniqueness"] = uniqueness_score(column_data)
+
+        if "Validity" in selected_metrics:
+            column_scores["Validity"] = validity_score(
                 column_data,
                 lambda x: bool(
-                    re.match(
-                        r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", str(x)
-                    )
+                    re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", str(x))
                 ),
-            ) if "email" in col.lower() else 100,
-            "Accuracy": accuracy_score(df, df2, col,threshold=None),
-            "Uniqueness": uniqueness_score(column_data),
-            "Consistency": consistency_score(df,df2, col)
-        }
+            ) if "email" in col.lower() else 100
+
+        if "Accuracy" in selected_metrics:
+            column_scores["Accuracy"] = accuracy_score(df, df2, col)
+
+        if "Consistency" in selected_metrics:
+            column_scores["Consistency"] = consistency_score(df, df2, col)
 
         detailed_scores[col] = column_scores
 
     scores_df = pd.DataFrame(detailed_scores).T
     return scores_df
 
-def overall_quality_score(scores_df):
-    """Calculate the overall quality score as the mean of all scores."""
-    return scores_df.mean().mean()
-
-
+def overall_quality_score(scores_df, selected_metrics=None):
+    """Calculate the overall quality score based on selected metrics."""
+    if selected_metrics is None:
+        selected_metrics = scores_df.columns  # Use all metrics if none are specified
+    return scores_df[selected_metrics].mean().mean()

@@ -14,7 +14,6 @@ def format_memory_size(bytes_size):
         index += 1
     return f"{bytes_size:.2f} {units[index]}"
 
-
 def generate_alerts(df):
     alerts = []
 
@@ -131,13 +130,14 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
             "Datetime": sum(df.dtypes == 'datetime64[ns]')
         }
 
-        metrics = ['Completeness', 'Timeliness', 'Validity', 'Accuracy', 'Uniqueness', 'Consistency']
+        metrics = ['Completeness', 'Validity', 'Accuracy', 'Uniqueness', 'Consistency']
 
         # Step 3: Initialize HTML Content
         html_content = []
 
         # Add external CSS file
         html_content.append("""<link rel="stylesheet" type="text/css" href="Data_Validation\\datadetairep\\Gde.css">""")
+        html_content.append(""" <script src="Data_Validation\\datadetairep\\DR.js"></script> """)
 
         # Add navigation bar
         html_content.append("""<div class="navigation-bar"><ul>
@@ -228,7 +228,6 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
         </script>
         """)
 
-
         # Step 4: Dataset Statistics and Variable Types Section
         html_content.append("""<div id='dataset-statistics' class='statistics-container' style="display: flex; justify-content: space-between; gap: 20px; padding: 20px; background-color: #f4f6f9; max-width: 1200px; margin: 20px auto; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);">
              <div class='statistics-section' style="flex: 1; padding: 20px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
@@ -256,43 +255,97 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
              .statistics-section:hover { transform: scale(1.02); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); }
              tr:hover { background-color: #f1f5f8; }
          </style>""")
-
-
-        html_content.append(f"""
-    <div id="overall-score" class="overall-score-container">
-    <p class="overall-score-label">Overall Data Quality Score</p>
-    <div class="overall-score-circle-container">
-        <svg width="120" height="120" class="circle">
-            <circle cx="60" cy="60" r="50" stroke="black" stroke-width="6" fill="none"></circle>
-            <circle cx="60" cy="60" r="50" stroke="yellow" stroke-width="6" stroke-dasharray="314"
-                stroke-dashoffset="{314 - (314 * overall_score) / 100}"
-                class="progress-circle"
-                style="fill: none; transition: stroke-dashoffset 0.5s ease;">
-            </circle>
-        </svg>
-        <div class="score-text">{overall_score:.2f}%</div>
-    </div>
+        
+        html_content.append(""" <div id="overall-quality-score" style="margin-top: 20px; display: none;">
+    <h4>Overall Quality Score</h4>
+    <p id="overall-score-value" style="font-size: 1.2em; font-weight: bold;">0.00%</p>
 </div>
+ """)
+        
 
+        html_content.append("<div id='quality-scores'><h3 class='section-title'>Quality Scores by Metric</h3>")
 
-""")   
-
-        # Step 4: Detailed Column-Wise Quality Scores Section
-        html_content.append("<div id='detailed-scores'><h3 class='section-title'>Detailed Column-Wise Quality Scores</h3>")
-        html_content.append("<table>")
-        html_content.append("<tr><th>Column</th>" + "".join(f"<th>{metric}</th>" for metric in metrics) + "</tr>")
-        for col, scores in detailed_scores_df.iterrows():
-            html_content.append("<tr>" + f"<td>{col}</td>" + "".join(f"<td>{scores.get(metric, 0):.2f}%</td>" for metric in metrics) + "</tr>")
-        html_content.append("</table></div>")
-
-        # Step 5: Overall Average Quality Scores Section
-        html_content.append("<div id='average-scores'><h3 class='section-title'>Overall Average Quality Scores</h3>")
-        html_content.append("<table>")
-        html_content.append("<tr><th>Metric</th><th>Average Score (%)</th></tr>")
+        # Add a checkbox for each metric
+        html_content.append("<div class='checkbox-container'>")
         for metric in metrics:
-            overall_metric_score = detailed_scores_df[metric].mean()
-            html_content.append(f"<tr><td>{metric}</td><td>{overall_metric_score:.2f}%</td></tr>")
-        html_content.append("</table></div>")
+            html_content.append(f"""
+                <div class="checkbox-item">
+                    <input type="checkbox" id="checkbox-{metric}" name="{metric}" onclick="toggleMetricScores('{metric}')">
+                    <label for="checkbox-{metric}">{metric}</label>
+                </div>
+            """)
+        html_content.append("</div>")
+
+        # Add containers to display column-wise scores dynamically
+        html_content.append("<div id='scores-table-container'>")
+        html_content.append("<h4>Quality Scores</h4>")
+        html_content.append("<table id='scores-table' style='display: none; border-collapse: collapse; width: 100%;'>")  
+        html_content.append("<thead id='table-header'>") 
+        html_content.append("<tr><th>Column</th>")
+
+        # Add column headers for each metric
+        for metric in metrics:
+            html_content.append(f"<th id='header-{metric}' style='display: none;'>{metric} Score (%)</th>")
+
+        html_content.append("</tr></thead><tbody id='table-body'>")
+
+        # Add rows for each column's scores
+        for col, scores in detailed_scores_df.iterrows():
+            html_content.append(f"<tr><td>{col}</td>")
+            for metric in metrics:
+                html_content.append(f"""
+                    <td id="score-{metric}-{col}" style="display: none; text-align: center;">
+                        {scores.get(metric, 0):.2f}%
+                    </td>
+                """)
+            html_content.append("</tr>")
+
+        html_content.append("</tbody></table></div>")
+
+        html_content.append("</div>") 
+
+
+
+
+
+#         html_content.append(f"""
+#     <div id="overall-score" class="overall-score-container">
+#     <p class="overall-score-label">Overall Data Quality Score</p>
+#     <div class="overall-score-circle-container">
+#         <svg width="120" height="120" class="circle">
+#             <circle cx="60" cy="60" r="50" stroke="black" stroke-width="6" fill="none"></circle>
+#             <circle cx="60" cy="60" r="50" stroke="yellow" stroke-width="6" stroke-dasharray="314"
+#                 stroke-dashoffset="{314 - (314 * overall_score) / 100}"
+#                 class="progress-circle"
+#                 style="fill: none; transition: stroke-dashoffset 0.5s ease;">
+#             </circle>
+#         </svg>
+#         <div class="score-text">{overall_score:.2f}%</div>
+#     </div>
+# </div>
+
+
+# """)   
+
+#         # Step 4: Detailed Column-Wise Quality Scores Section
+#         html_content.append("<div id='detailed-scores'><h3 class='section-title'>Detailed Column-Wise Quality Scores</h3>")
+#         html_content.append("<table>")
+#         html_content.append("<tr><th>Column</th>" + "".join(f"<th>{metric}</th>" for metric in metrics) + "</tr>")
+#         for col, scores in detailed_scores_df.iterrows():
+#             html_content.append("<tr>" + f"<td>{col}</td>" + "".join(f"<td>{scores.get(metric, 0):.2f}%</td>" for metric in metrics) + "</tr>")
+#         html_content.append("</table></div>")
+
+#         # Step 5: Overall Average Quality Scores Section
+#         html_content.append("<div id='average-scores'><h3 class='section-title'>Overall Average Quality Scores</h3>")
+#         html_content.append("<table>")
+#         html_content.append("<tr><th>Metric</th><th>Average Score (%)</th></tr>")
+#         for metric in metrics:
+#             overall_metric_score = detailed_scores_df[metric].mean()
+#             html_content.append(f"<tr><td>{metric}</td><td>{overall_metric_score:.2f}%</td></tr>")
+#         html_content.append("</table></div>")
+
+
+
 
         # Step 6: Move Missing Values Analysis Section here (after Average Scores)
         missing_data = df.isnull().sum()
@@ -369,8 +422,9 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
             plt.figure(figsize=(18, 12))  
 
             plt.bar(metrics, values, color='#3498db')
-            plt.title(f"{col}")
-            plt.xticks(rotation=45)
+            plt.title(f"{col}", fontsize=20)
+            plt.xticks(rotation=45,fontsize=16)
+            plt.yticks(fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.96]) 
 
             buffer = io.BytesIO()
@@ -383,8 +437,10 @@ def generate_detailed_report(df, detailed_scores_df, overall_score):
            
             plt.figure(figsize=(18, 12))  
 
-            sns.heatmap(np.array(values).reshape(1, -1), annot=True, fmt=".2f", cmap="coolwarm", cbar=False, xticklabels=metrics, yticklabels=[col])
-            plt.title(f"{col}")
+            sns.heatmap(np.array(values).reshape(1, -1), annot=True,annot_kws={"size": 20}, fmt=".2f", cmap="coolwarm", cbar=False, xticklabels=metrics, yticklabels=[col])
+            plt.title(f"{col}", fontsize=20)
+            plt.xticks(rotation=45,fontsize=16)
+            plt.yticks(fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.96])  
 
             buffer = io.BytesIO()

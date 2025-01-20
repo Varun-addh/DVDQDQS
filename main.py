@@ -7,7 +7,7 @@ import matplotlib
 import io
 import requests
 import zipfile
-# Ensure matplotlib works in headless environments
+
 matplotlib.use("Agg")
 
 if __name__ == "__main__":
@@ -17,8 +17,8 @@ if __name__ == "__main__":
             zf = zipfile.ZipFile(io.BytesIO(response.content))
             zf.extractall("Data_Validation\\Ds'S")
         # Step 1: Load the datasets
-        dataset_path = "Data_Validation\\Ds'S\\amazon.csv"
-        dataset_path2 = "Data_Validation\\Ds'S\\Amazon2.csv"
+        dataset_path = "Data_Validation\\Ds'S\\sample.csv"
+        dataset_path2 = "Data_Validation\\Ds'S\\second_dataset.csv"
         df = load_dataset(dataset_path)
         df2 = load_dataset(dataset_path2)
 
